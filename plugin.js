@@ -2580,6 +2580,7 @@ function makeFollowingEvents(deps = {}) {
 var BACKDROP3 = "https://image.tmdb.org/t/p/w780";
 var POSTER3 = "https://image.tmdb.org/t/p/w342";
 var PROVIDER_LOGO = "https://image.tmdb.org/t/p/w92";
+var STILL = "https://image.tmdb.org/t/p/w300";
 var MAX_CAST2 = 12;
 var MAX_SIMILAR = 12;
 var MAX_PER_GROUP = 10;
@@ -2694,6 +2695,9 @@ async function fetchSeason(tmdbId, season) {
     const airDate = day(e.air_date);
     if (airDate) ep.airDate = airDate;
     if (Number.isInteger(e.runtime) && e.runtime > 0) ep.runtime = e.runtime;
+    if (typeof e.still_path === "string" && /^\/[A-Za-z0-9._-]+$/.test(e.still_path)) ep.still = STILL + e.still_path;
+    const overview = text2(e.overview, 110);
+    if (overview) ep.overview = overview;
     out.push(ep);
     if (out.length >= MAX_EPISODES) break;
   }
@@ -2737,7 +2741,7 @@ var TT = {
     const label = m >= 60 ? `${Math.floor(m / 60)} h${m % 60 ? ` ${m % 60} min` : ""}` : `${m} min`;
     return [label, label];
   },
-  rating: (r) => [`${r}/10`, `${r}/10`],
+  rating: (r) => [`★ ${r}`, `★ ${r}`],
   episodeRuntime: (m) => [`${m} min`, `${m} min`]
 };
 var MONTHS = {
@@ -2802,6 +2806,8 @@ function titleModel({ args, entry, followed = null, followCount = 0, chosen = []
         ...e.title ? { title: e.title } : {},
         ...e.airDate ? { airDate: e.airDate } : {},
         ...e.runtime ? { runtime: e.runtime } : {},
+        ...e.still ? { still: e.still } : {},
+        ...e.overview ? { overview: e.overview } : {},
         aired: e.airDate ? e.airDate <= today : null
       }));
       episodes2 = { status: "ok", items, more: Math.max(0, Math.min(all.length, EPISODES_MAX) - items.length), season: current };
@@ -2856,12 +2862,27 @@ var failedPage = () => ({
   ]
 });
 var sectionTitle = (key) => ({ type: "Text", style: "h4", ...ptw(key) });
+var LEAD_MAX = 140;
 function hero(m) {
-  const children = [];
-  if (m.backdrop) children.push({ type: "Image", key: "tbackdrop", url: m.backdrop, aspect: "16:9", fit: "cover", focus: "top", alt: m.title, altEn: m.title });
-  if (m.logo) children.push({ type: "Image", key: "tlogo", url: m.logo, fit: "contain", height: 80, alt: m.title, altEn: m.title, fallback: { type: "Text", style: "h2", ...same(m.title) } });
-  else children.push({ type: "Text", key: "ttitle", style: "h2", ...same(m.title) });
-  return { type: "Column", key: "thero", gap: 12, children };
+  const lead = m.overview.length <= LEAD_MAX ? m.overview : `${m.overview.slice(0, LEAD_MAX - 1).trimEnd()}…`;
+  return {
+    type: "heroCard",
+    key: "thero",
+    h: { compact: 240, expanded: 320 },
+    title: m.title,
+    titleEn: m.title,
+    ...lead ? same(lead) : {},
+    ...m.backdrop ? { image: m.backdrop } : {},
+    ...m.logo ? { logo: m.logo } : {},
+    buttons: heroButtons(m)
+  };
+}
+function heroButtons(m) {
+  const buttons = [{ type: "ElevatedButton", key: "twhere", icon: "search", autofocus: true, ...ptw("where", "labelText"), onPressed: { go: m.where.go } }];
+  if (m.follow) {
+    buttons.push(m.follow.kind === "follow" ? { type: "TextButton", key: "tfollow", icon: "add", ...ptw("follow", "labelText"), onPressed: "titleFollow" } : { type: "TextButton", key: "tunfollow", icon: "check", ...ptw("unfollow", "labelText"), onPressed: "titleUnfollow" });
+  }
+  return buttons;
 }
 function facts(m) {
   const parts = [];
@@ -2869,15 +2890,11 @@ function facts(m) {
   if (m.facts.runtime) parts.push(pair("runtime", m.facts.runtime));
   if (m.facts.seasonCount) parts.push(pair("seasonsCount", m.facts.seasonCount));
   if (m.facts.rating) parts.push(pair("rating", m.facts.rating));
-  return { type: "Text", key: "tfacts", color: "muted", text: parts.map((p) => p[0]).join(" · "), textEn: parts.map((p) => p[1]).join(" · ") };
+  return { type: "Text", key: "tfacts", style: "h4", text: parts.map((p) => p[0]).join("  ·  "), textEn: parts.map((p) => p[1]).join("  ·  ") };
 }
 function actions(m) {
-  const buttons = [{ type: "ElevatedButton", key: "twhere", icon: "search", autofocus: true, ...ptw("where", "labelText"), onPressed: { go: m.where.go } }];
-  if (m.follow) {
-    buttons.push(m.follow.kind === "follow" ? { type: "Button", variant: "secondary", key: "tfollow", icon: "add", ...ptw("follow", "labelText"), onPressed: "titleFollow" } : { type: "Button", variant: "secondary", key: "tunfollow", icon: "check", ...ptw("unfollow", "labelText"), onPressed: "titleUnfollow" });
-  }
-  if (m.markSeen) buttons.push({ type: "TextButton", key: "tseen", icon: "check", ...ptw("markSeen", "labelText"), onPressed: "titleMarkSeen" });
-  return { type: "Row", key: "tactions", wrap: true, gap: 12, children: buttons };
+  if (!m.markSeen) return null;
+  return { type: "Row", key: "tactions", wrap: true, gap: 12, children: [{ type: "TextButton", key: "tseen", icon: "check", ...ptw("markSeen", "labelText"), onPressed: "titleMarkSeen" }] };
 }
 function platformsBlock(m, region) {
   const groupTitle = { stream: "groupStream", free: "groupFree", paid: "groupPaid" };
@@ -2948,15 +2965,20 @@ function episodeRow(e, i) {
   const run = e.runtime ? pair("episodeRuntime", e.runtime) : null;
   const sub = [date, run].filter(Boolean);
   return {
-    type: "ListTile",
+    type: "Row",
     key: "te-" + i,
-    dense: true,
-    title: titleEs,
-    titleEn,
-    ...sub.length ? { subtitle: sub.map((p) => p[0]).join(" · "), subtitleEn: sub.map((p) => p[1]).join(" · ") } : {},
-    ...e.aired === false ? { trailing: { type: "Badge", ...ptw("upcoming") } } : {},
-    ...e.aired === true ? { leading: { type: "Icon", name: "check", color: "primary" } } : { leading: { type: "Icon", name: "schedule", color: "muted" } },
-    canRequestFocus: true
+    gap: 12,
+    crossAxisAlignment: "center",
+    canRequestFocus: true,
+    children: [
+      { type: "Image", key: "tei-" + i, width: 120, aspect: "16:9", fit: "cover", ...e.still ? { url: e.still } : {}, fallback: { type: "Skeleton", shape: "block", height: 64 } },
+      { type: "Column", flex: 1, gap: 4, children: [
+        { type: "Text", bold: true, maxLines: 2, text: titleEs, textEn: titleEn },
+        ...sub.length ? [{ type: "Text", style: "caption", color: "muted", text: sub.map((p) => p[0]).join(" · "), textEn: sub.map((p) => p[1]).join(" · ") }] : [],
+        ...e.overview ? [{ type: "Text", style: "caption", color: "muted", maxLines: 2, ...same(e.overview) }] : [],
+        ...e.aired === false ? [{ type: "Badge", ...ptw("upcoming") }] : []
+      ] }
+    ]
   };
 }
 function episodesBlock(m) {
@@ -3001,8 +3023,10 @@ function titleTree(m, { region = "" } = {}) {
   for (const block of m.blocks) {
     if (block === "facts") parts.push(facts(m));
     else if (block === "genres") parts.push({ type: "Row", key: "tgenres", wrap: true, gap: 8, children: m.genres.map((g, i) => ({ type: "Badge", key: "tg-" + i, ...same(g) })) });
-    else if (block === "actions") parts.push(actions(m));
-    else if (block === "overview") parts.push({ type: "Column", key: "toverview", gap: 8, children: [sectionTitle("overview"), { type: "Text", canRequestFocus: true, ...same(m.overview) }] });
+    else if (block === "actions") {
+      const a = actions(m);
+      if (a) parts.push(a);
+    } else if (block === "overview") parts.push({ type: "Column", key: "toverview", gap: 8, children: [sectionTitle("overview"), { type: "Text", canRequestFocus: true, ...same(m.overview) }] });
     else if (block === "platforms") parts.push(platformsBlock(m, region));
     else if (block === "cast") parts.push(castBlock(m));
     else if (block === "seasons") parts.push(seasonsBlock(m));

@@ -8,6 +8,7 @@ import { castOf, pickLogo } from "../meta.js";
 const BACKDROP = "https://image.tmdb.org/t/p/w780";
 const POSTER = "https://image.tmdb.org/t/p/w342";
 const PROVIDER_LOGO = "https://image.tmdb.org/t/p/w92";
+const STILL = "https://image.tmdb.org/t/p/w300";
 const MAX_CAST = 12;
 const MAX_SIMILAR = 12;
 const MAX_PER_GROUP = 10;
@@ -127,7 +128,7 @@ export async function fetchTitle(args, region) {
   return out;
 }
 
-/** The episodes of [season] of series [tmdbId]: `[{ number, title?, airDate?, runtime? }]` (empty when TMDB lists none). */
+/** The episodes of [season] of series [tmdbId]: `[{ number, title?, airDate?, runtime?, still?, overview? }]` (empty when TMDB lists none). */
 export async function fetchSeason(tmdbId, season) {
   const body = await ask(`/tv/${tmdbId}/season/${season}`, { language: tmdbLanguage() });
   const rows = isObject(body) && Array.isArray(body.episodes) ? body.episodes : [];
@@ -140,6 +141,9 @@ export async function fetchSeason(tmdbId, season) {
     const airDate = day(e.air_date);
     if (airDate) ep.airDate = airDate;
     if (Number.isInteger(e.runtime) && e.runtime > 0) ep.runtime = e.runtime;
+    if (typeof e.still_path === "string" && /^\/[A-Za-z0-9._-]+$/.test(e.still_path)) ep.still = STILL + e.still_path;
+    const overview = text(e.overview, 110);
+    if (overview) ep.overview = overview;
     out.push(ep);
     if (out.length >= MAX_EPISODES) break;
   }

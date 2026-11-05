@@ -1,7 +1,7 @@
 {
   "id": "mega-catalogo",
   "name": "Mega Catálogo",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "apiVersion": 23,
   "entry": "plugin.js",
   "icon": "icon.png",
