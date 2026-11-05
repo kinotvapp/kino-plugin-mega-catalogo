@@ -53,8 +53,32 @@ async function acquire() {
   }
 }
 
-/** One `kino.tmdb` call, throttled; its failures stay Kino's own errors (their `code` reaches Kino, which words them for the person). */
+/** The person's own TMDB key (the `tmdbKey` setting), or "". With it the calls go straight to TMDB, outside Kino's shared budget. */
+export function ownKey() {
+  try {
+    const k = kino.config.get("tmdbKey");
+    return typeof k === "string" ? k.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
+/** One call with the person's own key; a refused key (401) is `null` so the caller falls back to Kino's. */
+async function askOwn(key, path, params) {
+  const q = new URLSearchParams({ ...params, api_key: key });
+  const r = await kino.fetch(`https://api.themoviedb.org/3${path}?${q}`);
+  if (r.status === 401) return null;
+  if (!r.ok) throw kino.error(r.status === 404 ? "not_found" : "unavailable", "TMDB answered " + r.status);
+  return r.json();
+}
+
+/** One TMDB call: with the person's own key when set (no throttle of ours), else `kino.tmdb`, throttled; its failures stay Kino's own errors (their `code` reaches Kino, which words them for the person). */
 export async function ask(path, params) {
+  const key = ownKey();
+  if (key) {
+    const body = await askOwn(key, path, params);
+    if (body !== null) return body;
+  }
   if (typeof kino.tmdb !== "function") throw kino.error("unavailable", "kino.tmdb needs Kino 0.9.53 or later"); // catalogOnly already needs 0.9.54
   await acquire();
   return kino.tmdb(path, params);

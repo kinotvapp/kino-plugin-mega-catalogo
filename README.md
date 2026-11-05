@@ -1,10 +1,5 @@
 # Mega Catálogo (Mega Catalog)
 
-<p align="center"><img src="icon.png" alt="Mega Catálogo" width="96" height="96"></p>
-
-**Mega Catálogo** para Kino: qué hay en Netflix, Disney+, Prime Video y más en tu país. Solo catálogo, no reproduce nada.
-*Mega Catalog for Kino: what is on Netflix, Disney+, Prime Video and more in your country. Catalog only, it plays nothing.*
-
 A catalog-only Kino plugin: it shows what is available on the streaming platforms the person picks (Netflix, Prime Video,
 Disney+, Max, Apple TV+, Paramount+, Crunchyroll, Hulu) in the person's country, what is new, and lets them search and follow
 series. Data comes from TMDB through `kino.tmdb` (Kino brings the key).
@@ -14,7 +9,7 @@ series. Data comes from TMDB through `kino.tmdb` (Kino brings the key).
 - It is a catalog. `catalogOnly: true`, no account, no login, always `include_adult=false` (there is no setting for 18+).
 - It never plays anything and is not from any platform. A title's main button is **Buscar dónde verlo** (`go.titleByIds`):
   Kino looks the title up in the person's other plugins (one match plays, several open the sources list, none says so).
-- Hosts: only `image.tmdb.org` (posters). The plugin declares no TMDB host.
+- Hosts: `image.tmdb.org` (posters) and `api.themoviedb.org`, used only when the person pastes their own TMDB key (the `tmdbKey` setting); without it every TMDB call goes through Kino's own `kino.tmdb`.
 
 ## Requirements
 
@@ -41,7 +36,7 @@ Kino with `apiVersion` 23 (the manifest declares it; the validator notes it need
   prefs, and the state of the `episodes` job with an "Activar los avisos" button.
 - Navigation: one merged top bar (`AppBar` with `mergeWithKinoBar`, `dense`) with the tabs Inicio / Buscar / Siguiendo / Ajustes
   as its `bottom`. The Title screen is a pushed route, so Back returns to the previous screen.
-- Beyond the screen, Kino's own section and Home also get the rows (the `homeRows` setting turns Home rows off). Home loads only
+- Beyond the screen, Kino's own section and Home also get the rows (the `homeRows` pref turns Home rows off). Home loads only
   the first 3 chosen platforms (at most about 12 TMDB calls); the rest is reachable from browse and the screen.
 
 ## Settings
@@ -54,7 +49,7 @@ The 12 value settings in `kino-plugin.json` (Kino's limit is 12 values):
 | `region` | select | `auto` | 19 countries plus `auto`; `auto` takes the country from Kino's language when it names one (e.g. es-CO), otherwise US |
 | `kinds` | select | `both` | `both` / `movie` / `series` |
 | `newDays` | select | `90` | 30 / 90 / 180: what counts as new (release date, not the date a title joined a platform) |
-| `homeRows` | toggle | on | rows on Kino's Home |
+| `tmdbKey` | password (device only, never synced) | empty | the person's own TMDB key: calls go straight to TMDB and up to 100 series can be followed instead of 10 (a refused key falls back to Kino's) |
 
 Actions: `resetIntro` (clears `setupDone`, shows the stepper again) and `reloadCatalog` (clears the saved catalog and reloads,
 asks for confirmation).
@@ -66,7 +61,8 @@ Ajustes, validated on read):
 | --- | --- | --- |
 | `hideWatched` | off | hides watched titles from Inicio, Buscar, Kino's Home rows, "Ver más" pages and the `search` export (never the new-episodes row); when off, watched cards carry a "Visto" badge |
 | `autoFollow` | off | follows series saved in Kino's library |
-| `notifyDigest` | off | one weekly digest notice (needs the `episodes` job on) |
+| `notifyDigest` | on | one weekly digest notice (needs the `episodes` job on) |
+| `homeRows` | on | rows on Kino's Home |
 | `newEpisodeDays` | 14 | 7 / 14 / 30: how far back the "Capítulos nuevos" row reaches |
 
 ## Jobs
@@ -78,7 +74,7 @@ Each job has its own switch in Kino's Ajustes, under Mega Catálogo. Both start 
   (bounded to 400 titles and 90 KB, tagged with the region). The screen and search merge the stage into kino.catalog when they
   open and clear it. Lists that came back empty are backed off for 24 h. Progress is saved every 5 requests, so a run writes the stage at most twice (Kino cuts a run that writes more than 256 KB).
 - **`episodes`** ("Avisar de capítulos nuevos", every 360 min, options 60 / 180 / 360 / 720 / 1440, `runOn: "preferPhone"`).
-  Checks up to 8 followed series per run (rotating cursor, so 10 series take two runs; it stops between series after 12 s and saves each series as it goes), compares TMDB's `last_episode_to_air`
+  Checks up to 8 followed series per run (rotating cursor, so 10 series take two runs and 100 about thirteen; it stops between series after 12 s and saves each series as it goes), compares TMDB's `last_episode_to_air`
   with what it has already seen, posts a bell notice `ep-<tmdbId>` ("T2·E5 «Título» ya salió") whose tap opens the series with
   `titleByIds`, and stores the latest episode for the Home row. It then runs `autoFollow` (at most 2 new follows) and the weekly
   digest (`digest-YYYY-Www`, no TMDB request). Because it prefers the phone, bell notices (per device, not synced) land on the
@@ -86,7 +82,7 @@ Each job has its own switch in Kino's Ajustes, under Mega Catálogo. Both start 
 
 ## Following
 
-- Limit: 10 series. The 11th is refused with "Ya sigues 10 series. Deja de seguir una para agregar otra" (and the English
+- Limit: 10 series (100 with the person's own TMDB key). The 11th is refused with "Ya sigues 10 series. Deja de seguir una para agregar otra" (and the English
   text), never dropped silently.
 - Lives in `kino.shared` key `follows` (syncs between devices). A new follow takes the latest aired episode as its baseline, so
   old episodes do not notify.

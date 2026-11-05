@@ -1,4 +1,5 @@
 // The streaming platforms the plugin knows, with TMDB's watch-provider ids, and the settings that choose among them.
+import { prefsOf } from "./prefs.js";
 import { countryOfLang, t } from "./i18n.js";
 
 /** key = the suffix of the `p_<key>` toggle; providerId = TMDB's watch-provider id (`with_watch_providers`). */
@@ -47,10 +48,9 @@ export function newDaysOf(config) {
   return n === 30 || n === 180 ? n : 90;
 }
 
-/** Whether Kino's Home shows this plugin's rows (default on). */
-export function homeRowsOn(config) {
-  const v = setting(config, "homeRows");
-  return v === undefined || v === null || isOn(v);
+/** Whether Kino's Home shows this plugin's rows (the `homeRows` pref, default on; it lives in kino.shared, see prefs.js). */
+export function homeRowsOn() {
+  return prefsOf().homeRows;
 }
 
 /** The localized title of each kind of row. */

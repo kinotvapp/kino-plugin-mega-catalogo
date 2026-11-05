@@ -16,7 +16,7 @@ import { where as availabilityWhere, searchTitles as availabilitySearch } from "
 
 /** Home: the rows of every chosen platform, or none when the person turned the rows off (they still have the plugin's screen). */
 export async function home() {
-  if (!homeRowsOn(kino.config)) return [];
+  if (!homeRowsOn()) return [];
   return rowsWithoutWatched(await homeRows(kino.config), await hiddenRefs());
 }
 

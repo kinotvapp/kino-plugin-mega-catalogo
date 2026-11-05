@@ -200,7 +200,8 @@ export function makeScreenApp(deps = {}) {
       const r = st.setupStart(state.setup || freshSetup());
       if (r.error) return setupAnswer(r.setup);
       // The choices go to the real settings now (a write restarts the runtime: the ticks read the setup, not kino.config).
-      return setupAnswer(r.setup, { config: r.config });
+      // Starting is the person's tap on the text that says what runs: it turns on Kino's row of the notices job (and the weekly digest, a pref on by default).
+      return setupAnswer(r.setup, { config: r.config, enableJob: "episodes" });
     },
     async setupTick({ state }) {
       if (!state.setup || !state.setup.run || state.setup.run.status !== "loading") return null;

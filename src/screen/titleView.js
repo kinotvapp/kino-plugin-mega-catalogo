@@ -3,7 +3,7 @@
 // data loads the page is skeletons and a one-second timer asks for it; a TMDB failure shows a retry, never a blank screen.
 // On a TV the D-pad walks: Back, then "Buscar dónde verlo" (autofocus), Seguir, the season chips, the episodes, the similar rail.
 import { langOf, tw } from "../i18n.js";
-import { list as followList, MAX_FOLLOWS } from "../follows.js";
+import { list as followList, maxFollows } from "../follows.js";
 import { enabledPlatforms, regionOf } from "../platforms.js";
 import { shell } from "./shell.js";
 import { titleArgs } from "./state.js";
@@ -153,7 +153,7 @@ export function titleModel({ args, entry, followed = null, followCount = 0, chos
     episodes,
     similar: d.similar || [],
     where: { go: { titleByIds: Object.fromEntries(Object.entries(title).filter(([, v]) => v !== "" && v !== undefined)) } },
-    follow: series ? { kind: followed ? "unfollow" : "follow", limit: !followed && followCount >= MAX_FOLLOWS } : null,
+    follow: series ? { kind: followed ? "unfollow" : "follow", limit: !followed && followCount >= maxFollows() } : null,
     markSeen: series && unseen,
   };
 }

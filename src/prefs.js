@@ -21,18 +21,19 @@ export function newEpisodeDaysOf(prefs = readPrefs()) {
 /** The choices of `newEpisodeDays`. */
 export const NEW_EPISODE_DAYS = [7, 14, 30];
 
-/** Every pref, validated, with its default: `{ hideWatched, autoFollow, notifyDigest, newEpisodeDays }` (all off, 14 days). */
+/** Every pref, validated, with its default: `{ hideWatched, autoFollow, notifyDigest, homeRows, newEpisodeDays }` (the weekly digest and the Home rows on, the rest off, 14 days). */
 export function prefsOf(prefs = readPrefs()) {
   const p = prefs && typeof prefs === "object" ? prefs : {};
   return {
     hideWatched: p.hideWatched === true,
     autoFollow: p.autoFollow === true,
-    notifyDigest: p.notifyDigest === true,
+    notifyDigest: p.notifyDigest !== false,
+    homeRows: p.homeRows !== false,
     newEpisodeDays: newEpisodeDaysOf(p),
   };
 }
 
-const BOOLEAN_PREFS = ["hideWatched", "autoFollow", "notifyDigest"];
+const BOOLEAN_PREFS = ["hideWatched", "autoFollow", "notifyDigest", "homeRows"];
 
 /**
  * Write one pref (the screen's own widgets) and answer `{ ok: true, prefs }`, or `{ ok: false, code }`: "bad_request" for an

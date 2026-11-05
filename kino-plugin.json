@@ -1,11 +1,17 @@
 {
   "id": "mega-catalogo",
   "name": "Mega Catálogo",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "apiVersion": 23,
   "entry": "plugin.js",
   "icon": "icon.png",
-  "theme": { "accent": "#8E7DFF", "onAccent": "#120C2E", "background": "#1E1640", "surface": "#2B2160", "highlight": "#D4CEFF" },
+  "theme": {
+    "accent": "#8E7DFF",
+    "onAccent": "#120C2E",
+    "background": "#1E1640",
+    "surface": "#2B2160",
+    "highlight": "#D4CEFF"
+  },
   "description": "Qué hay en Netflix, Disney+, Prime Video y más según tu país: elige tus plataformas y mira lo nuevo y lo más visto. No reproduce nada.",
   "categories": [
     "movies",
@@ -13,7 +19,8 @@
   ],
   "author": "kinotvapp",
   "hosts": [
-    "image.tmdb.org"
+    "image.tmdb.org",
+    "api.themoviedb.org"
   ],
   "catalogOnly": true,
   "capabilities": [
@@ -289,11 +296,13 @@
       ]
     },
     {
-      "key": "homeRows",
-      "label": "Filas en el Inicio de Kino",
-      "labelEn": "Rows on Kino's Home",
-      "type": "toggle",
-      "default": true
+      "key": "tmdbKey",
+      "label": "Tu llave de TMDB (opcional)",
+      "labelEn": "Your TMDB key (optional)",
+      "type": "password",
+      "sync": false,
+      "hint": "Con tu llave, hasta 100 series. Cifrada, solo en este aparato",
+      "hintEn": "With your key, up to 100 series. Encrypted, on this device only"
     },
     {
       "key": "resetIntro",

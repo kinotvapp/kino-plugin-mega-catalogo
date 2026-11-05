@@ -2,7 +2,7 @@
 // seen), "Marcar todo como visto", the "N de 10" counter, the empty state that explains the notices, and a box to add a series by
 // searching the catalog. Pure: `followingModel` reads the follows (kino.shared, through follows.js `list`) and the add box's
 // state, `followingView` draws it; index.js owns the events.
-import { MAX_FOLLOWS } from "../follows.js";
+import { maxFollows } from "../follows.js";
 import { cleanQuery, cleanRecord, compactItem } from "./searchView.js";
 import { vw } from "./viewText.js";
 
@@ -62,7 +62,7 @@ export function followingModel({ follows, jobOn, add }) {
   const a = cleanAdd(add);
   return {
     count: list.length,
-    max: MAX_FOLLOWS,
+    max: maxFollows(),
     anyNew: fresh.length > 0,
     rows,
     jobOn: jobOn === true ? true : jobOn === false ? false : null,

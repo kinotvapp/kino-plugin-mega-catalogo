@@ -8,9 +8,13 @@
 //   latest  { season, number, title?, airDate } the newest aired episode the job found since the follow (the Home row reads it).
 //   ackedAt ISO time of "Marcar como visto"; a newer episode clears it.
 import { t, tmdbLanguage } from "./i18n.js";
-import { ask, posterUrl } from "./tmdb.js";
+import { ask, ownKey, posterUrl } from "./tmdb.js";
 
 export const MAX_FOLLOWS = 10;
+export const MAX_FOLLOWS_OWN_KEY = 100; // with the person's own TMDB key (kino.shared's 64 KB holds them with room to spare)
+
+/** How many series may be followed now: 10, or 100 with the person's own TMDB key. */
+export const maxFollows = () => (ownKey() ? MAX_FOLLOWS_OWN_KEY : MAX_FOLLOWS);
 const KEY = "follows";
 const MAX_NAME = 120;
 const MAX_URL = 300;
@@ -66,7 +70,7 @@ function read() {
     const c = cleanRecord(r);
     if (c && !byId.has(c.tmdbId)) byId.set(c.tmdbId, c);
   }
-  return [...byId.values()].slice(0, MAX_FOLLOWS);
+  return [...byId.values()].slice(0, MAX_FOLLOWS_OWN_KEY);
 }
 
 function write(items) {
@@ -89,11 +93,17 @@ export function isFollowing(tmdbId) {
 
 const fail = (code, es, en) => ({ ok: false, code, message: t(es, en), messageEs: es, messageEn: en });
 const noShared = () => fail("unavailable", "No se pueden guardar las series que sigues en este aparato", "The series you follow cannot be saved on this device");
-const limitReached = (count) => ({
-  ...fail("limit", `Ya sigues ${MAX_FOLLOWS} series. Deja de seguir una para agregar otra`, `You already follow ${MAX_FOLLOWS} series. Unfollow one to add another`),
-  max: MAX_FOLLOWS,
-  count,
-});
+const limitReached = (count) => {
+  const max = maxFollows();
+  const own = max > MAX_FOLLOWS;
+  return {
+    ...fail("limit",
+      `Ya sigues ${max} series. Deja de seguir una para agregar otra${own ? "" : ", o pon tu llave de TMDB en Ajustes para seguir hasta 100"}`,
+      `You already follow ${max} series. Unfollow one to add another${own ? "" : ", or add your TMDB key in Settings to follow up to 100"}`),
+    max,
+    count,
+  };
+};
 
 /**
  * Follow [series] `{ tmdbId, name, poster? }`. Answers `{ ok: true, added, count }`, or `{ ok: false, code, message, messageEs,
@@ -108,7 +118,7 @@ export async function follow(series) {
   if (!hasShared()) return noShared();
   const current = read();
   if (current.some((f) => f.tmdbId === series.tmdbId)) return { ok: true, added: false, count: current.length };
-  if (current.length >= MAX_FOLLOWS) return limitReached(current.length);
+  if (current.length >= maxFollows()) return limitReached(current.length);
   let seen = null;
   let poster = typeof series.poster === "string" ? series.poster : undefined;
   try {
@@ -122,7 +132,7 @@ export async function follow(series) {
   // the list may have changed (another device, another tap) while TMDB answered
   const fresh = read();
   if (fresh.some((f) => f.tmdbId === series.tmdbId)) return { ok: true, added: false, count: fresh.length };
-  if (fresh.length >= MAX_FOLLOWS) return limitReached(fresh.length);
+  if (fresh.length >= maxFollows()) return limitReached(fresh.length);
   fresh.push(cleanRecord({ tmdbId: series.tmdbId, name: series.name, poster, seen }));
   if (!write(fresh)) return fail("unavailable", "No se pudo guardar la serie", "The series could not be saved");
   return { ok: true, added: true, count: fresh.length };

@@ -37,9 +37,10 @@ export function settingsView({ prefs, jobOn }) {
         { type: "settings", key: "settingsPlatforms", autoSave: true, onSaved: "saved", keys: [...PLATFORMS.map((p) => "p_" + p.key), "region"] },
       ]),
       section("setShow", "setShowTitle", [
-        { type: "settings", key: "settingsShow", autoSave: true, onSaved: "saved", keys: ["kinds", "newDays", "homeRows"] },
+        { type: "settings", key: "settingsShow", autoSave: true, onSaved: "saved", keys: ["kinds", "newDays", "tmdbKey"] },
       ]),
       section("setApp", "setAppTitle", [
+        prefSwitch("homeRows", "prefHomeRows", "prefHomeRows", "prefHomeRowsHint", prefs.homeRows),
         prefSwitch("hideWatched", "prefHideWatched", "prefHideWatched", "prefHideWatchedHint", prefs.hideWatched),
         prefSwitch("autoFollow", "prefAutoFollow", "prefAutoFollow", "prefAutoFollowHint", prefs.autoFollow),
         prefSwitch("notifyDigest", "prefNotifyDigest", "prefNotifyDigest", "prefNotifyDigestHint", prefs.notifyDigest),

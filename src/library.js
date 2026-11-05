@@ -3,7 +3,7 @@
 //   - hideWatched: titles the person already watched are left out of the rails and the search (or marked "Visto" when it is off);
 //   - autoFollow: the series they saved are followed (at most 10 in all, never replacing a follow, an unfollow sticks).
 import { t } from "./i18n.js";
-import { follow, list as followList, MAX_FOLLOWS } from "./follows.js";
+import { follow, list as followList, maxFollows } from "./follows.js";
 import { prefsOf } from "./prefs.js";
 
 export const WATCHED_TTL_MS = 60000; // kino.library allows 30 calls a minute: one read a minute is plenty for a screen
@@ -98,7 +98,7 @@ export async function autoFollow({ maxNew = 3 } = {}) {
   }
   const following = new Set(followList().map((f) => f.tmdbId));
   const done = new Set(readAuto());
-  let room = MAX_FOLLOWS - following.size;
+  let room = maxFollows() - following.size;
   let added = 0;
   const marked = [];
   for (const row of Array.isArray(saved) ? saved : []) {
