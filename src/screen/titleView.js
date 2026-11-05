@@ -146,6 +146,7 @@ export function titleModel({ args, entry, followed = null, followCount = 0, chos
     title: d.title,
     logo: d.logo || null,
     backdrop: d.backdrop || d.poster || null,
+    images: d.images || null,
     facts,
     genres: d.genres || [],
     overview: d.overview || "",
@@ -186,14 +187,18 @@ const sectionTitle = (key) => ({ type: "Text", style: "h4", ...ptw(key) });
 
 const LEAD_MAX = 140;
 
-/** The banner: the backdrop under the title (its logo when TMDB has one), a short lead and the two main buttons. */
+/** The banner: the backdrop under the title (a slider of the title's pictures when there are several; its logo when TMDB has one), a short lead and the two main buttons. */
 function hero(m) {
   const lead = m.overview.length <= LEAD_MAX ? m.overview : `${m.overview.slice(0, LEAD_MAX - 1).trimEnd()}…`;
-  return {
-    type: "heroCard", key: "thero", h: { compact: 240, expanded: 320 }, title: m.title, titleEn: m.title, ...(lead ? same(lead) : {}),
-    ...(m.backdrop ? { image: m.backdrop } : {}), ...(m.logo ? { logo: m.logo } : {}),
-    buttons: heroButtons(m),
-  };
+  const buttons = heroButtons(m);
+  const images = m.images && m.images.length > 1 ? m.images : [m.backdrop];
+  const slide = (image, i) => ({
+    type: "heroCard", key: i ? "thero-" + i : "thero", h: { compact: 240, expanded: 320 }, title: m.title, titleEn: m.title, ...(lead ? same(lead) : {}),
+    ...(image ? { image } : {}), ...(m.logo ? { logo: m.logo } : {}),
+    buttons: i ? buttons.map((b) => ({ ...b, key: b.key + "-" + i, autofocus: false })) : buttons,
+  });
+  // The key carries the number of slides: Kino's pager keeps the count of its first drawing.
+  return images.length > 1 ? { type: "PageView", key: "hero" + images.length, autoPlayMs: 6000, children: images.map(slide) } : slide(images[0], 0);
 }
 
 function heroButtons(m) {
@@ -274,7 +279,7 @@ function episodeRow(e, i) {
   return {
     type: "Row", key: "te-" + i, gap: 12, crossAxisAlignment: "center", canRequestFocus: true,
     children: [
-      { type: "Image", key: "tei-" + i, width: 120, aspect: "16:9", fit: "cover", ...(e.still ? { url: e.still } : {}), fallback: { type: "Skeleton", shape: "block", height: 64 } },
+      { type: "Image", key: "tei-" + i, width: 120, aspect: "16:9", fit: "cover", radius: "medium", ...(e.still ? { url: e.still } : {}), fallback: { type: "Skeleton", shape: "block", height: 64 } },
       { type: "Column", flex: 1, gap: 4, children: [
         { type: "Text", bold: true, maxLines: 2, text: titleEs, textEn: titleEn },
         ...(sub.length ? [{ type: "Text", style: "caption", color: "muted", text: sub.map((p) => p[0]).join(" · "), textEn: sub.map((p) => p[1]).join(" · ") }] : []),

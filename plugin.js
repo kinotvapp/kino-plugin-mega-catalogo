@@ -1396,8 +1396,10 @@ function shell({ route, body: body2, every }) {
       { type: "IconButton", key: "barSettings", icon: "settings", ...tw("tabSettings", "labelText"), ...tw("tabSettings", "tooltip"), onPressed: { event: "tab", arg: "settings" } }
     ];
   }
-  const banner = body2 && body2.key === "titleBody" && Array.isArray(body2.children) && body2.children[0] && body2.children[0].type === "heroCard" ? body2.children[0] : null;
-  const rest = banner ? { ...body2, children: body2.children.slice(1) } : body2;
+  const isBanner = (n) => !!n && (n.type === "heroCard" || n.key === "heroSkeleton" || n.type === "PageView" && String(n.key).startsWith("hero"));
+  const lifts = !!body2 && (body2.key === "titleBody" || body2.key === "home") && Array.isArray(body2.children);
+  const banner = lifts ? body2.children.find(isBanner) || null : null;
+  const rest = banner ? { ...body2, children: body2.children.filter((n) => n !== banner) } : body2;
   const page = {
     type: "SingleChildScrollView",
     key: "page-" + route,
@@ -2583,6 +2585,16 @@ var BACKDROP3 = "https://image.tmdb.org/t/p/w780";
 var POSTER3 = "https://image.tmdb.org/t/p/w342";
 var PROVIDER_LOGO = "https://image.tmdb.org/t/p/w92";
 var STILL = "https://image.tmdb.org/t/p/w300";
+var MAX_SLIDES = 5;
+function backdropsOf(images, first) {
+  const list2 = isObject2(images) && Array.isArray(images.backdrops) ? images.backdrops : [];
+  const sorted = list2.filter((b) => isObject2(b) && typeof b.file_path === "string" && Number(b.width) >= 1e3).sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+  const out = [];
+  for (const u of [first, ...sorted.map((b) => img2(BACKDROP3, b.file_path))]) {
+    if (u && !out.some((x) => x.slice(x.lastIndexOf("/")) === u.slice(u.lastIndexOf("/")))) out.push(u);
+  }
+  return out.slice(0, MAX_SLIDES);
+}
 var MAX_CAST2 = 12;
 var MAX_SIMILAR = 12;
 var MAX_PER_GROUP = 10;
@@ -2648,7 +2660,7 @@ async function fetchTitle(args, region) {
   const tmdbLang = tmdbLanguage();
   const lang = langOf();
   const base = (series ? "/tv/" : "/movie/") + args.tmdbId;
-  const body2 = await ask(base, { language: tmdbLang, append_to_response: "credits,images,similar,watch/providers", include_image_language: lang === "es" ? "es,en" : "en" });
+  const body2 = await ask(base, { language: tmdbLang, append_to_response: "credits,images,similar,watch/providers", include_image_language: lang === "es" ? "es,en,null" : "en,null" });
   if (!isObject2(body2)) throw kino.error("not_found", "no such title");
   const title = text2(series ? body2.name : body2.title, 120);
   if (!title) throw kino.error("not_found", "no such title");
@@ -2669,6 +2681,8 @@ async function fetchTitle(args, region) {
   if (typeof body2.vote_average === "number" && body2.vote_average > 0 && (body2.vote_count === void 0 || body2.vote_count > 0)) out.rating = Math.round(body2.vote_average * 10) / 10;
   const backdrop = img2(BACKDROP3, body2.backdrop_path);
   if (backdrop) out.backdrop = backdrop;
+  const slides = backdropsOf(body2.images, backdrop);
+  if (slides.length > 1) out.images = slides;
   const poster = img2(POSTER3, body2.poster_path);
   if (poster) out.poster = poster;
   const logo = pickLogo(body2.images, lang);
@@ -2825,6 +2839,7 @@ function titleModel({ args, entry, followed = null, followCount = 0, chosen = []
     title: d.title,
     logo: d.logo || null,
     backdrop: d.backdrop || d.poster || null,
+    images: d.images || null,
     facts: facts2,
     genres: d.genres || [],
     overview: d.overview || "",
@@ -2867,17 +2882,20 @@ var sectionTitle = (key) => ({ type: "Text", style: "h4", ...ptw(key) });
 var LEAD_MAX = 140;
 function hero(m) {
   const lead = m.overview.length <= LEAD_MAX ? m.overview : `${m.overview.slice(0, LEAD_MAX - 1).trimEnd()}…`;
-  return {
+  const buttons = heroButtons(m);
+  const images = m.images && m.images.length > 1 ? m.images : [m.backdrop];
+  const slide = (image, i) => ({
     type: "heroCard",
-    key: "thero",
+    key: i ? "thero-" + i : "thero",
     h: { compact: 240, expanded: 320 },
     title: m.title,
     titleEn: m.title,
     ...lead ? same(lead) : {},
-    ...m.backdrop ? { image: m.backdrop } : {},
+    ...image ? { image } : {},
     ...m.logo ? { logo: m.logo } : {},
-    buttons: heroButtons(m)
-  };
+    buttons: i ? buttons.map((b) => ({ ...b, key: b.key + "-" + i, autofocus: false })) : buttons
+  });
+  return images.length > 1 ? { type: "PageView", key: "hero" + images.length, autoPlayMs: 6e3, children: images.map(slide) } : slide(images[0], 0);
 }
 function heroButtons(m) {
   const buttons = [{ type: "ElevatedButton", key: "twhere", icon: "search", autofocus: true, ...ptw("where", "labelText"), onPressed: { go: m.where.go } }];
@@ -2973,7 +2991,7 @@ function episodeRow(e, i) {
     crossAxisAlignment: "center",
     canRequestFocus: true,
     children: [
-      { type: "Image", key: "tei-" + i, width: 120, aspect: "16:9", fit: "cover", ...e.still ? { url: e.still } : {}, fallback: { type: "Skeleton", shape: "block", height: 64 } },
+      { type: "Image", key: "tei-" + i, width: 120, aspect: "16:9", fit: "cover", radius: "medium", ...e.still ? { url: e.still } : {}, fallback: { type: "Skeleton", shape: "block", height: 64 } },
       { type: "Column", flex: 1, gap: 4, children: [
         { type: "Text", bold: true, maxLines: 2, text: titleEs, textEn: titleEn },
         ...sub.length ? [{ type: "Text", style: "caption", color: "muted", text: sub.map((p) => p[0]).join(" · "), textEn: sub.map((p) => p[1]).join(" · ") }] : [],

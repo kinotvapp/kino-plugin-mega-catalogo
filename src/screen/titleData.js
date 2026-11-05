@@ -9,6 +9,18 @@ const BACKDROP = "https://image.tmdb.org/t/p/w780";
 const POSTER = "https://image.tmdb.org/t/p/w342";
 const PROVIDER_LOGO = "https://image.tmdb.org/t/p/w92";
 const STILL = "https://image.tmdb.org/t/p/w300";
+const MAX_SLIDES = 5;
+
+/** The title's wide pictures (TMDB's backdrops, best voted first) for the banner's slider: [first], the one the page already has, leads. */
+function backdropsOf(images, first) {
+  const list = isObject(images) && Array.isArray(images.backdrops) ? images.backdrops : [];
+  const sorted = list.filter((b) => isObject(b) && typeof b.file_path === "string" && Number(b.width) >= 1000).sort((a, b) => (b.vote_average || 0) - (a.vote_average || 0));
+  const out = [];
+  for (const u of [first, ...sorted.map((b) => img(BACKDROP, b.file_path))]) {
+    if (u && !out.some((x) => x.slice(x.lastIndexOf("/")) === u.slice(u.lastIndexOf("/")))) out.push(u);
+  }
+  return out.slice(0, MAX_SLIDES);
+}
 const MAX_CAST = 12;
 const MAX_SIMILAR = 12;
 const MAX_PER_GROUP = 10;
@@ -89,7 +101,7 @@ export async function fetchTitle(args, region) {
   const tmdbLang = tmdbLanguage();
   const lang = langOf();
   const base = (series ? "/tv/" : "/movie/") + args.tmdbId;
-  const body = await ask(base, { language: tmdbLang, append_to_response: "credits,images,similar,watch/providers", include_image_language: lang === "es" ? "es,en" : "en" });
+  const body = await ask(base, { language: tmdbLang, append_to_response: "credits,images,similar,watch/providers", include_image_language: lang === "es" ? "es,en,null" : "en,null" });
   if (!isObject(body)) throw kino.error("not_found", "no such title");
   const title = text(series ? body.name : body.title, 120);
   if (!title) throw kino.error("not_found", "no such title");
@@ -111,6 +123,8 @@ export async function fetchTitle(args, region) {
   if (typeof body.vote_average === "number" && body.vote_average > 0 && (body.vote_count === undefined || body.vote_count > 0)) out.rating = Math.round(body.vote_average * 10) / 10;
   const backdrop = img(BACKDROP, body.backdrop_path);
   if (backdrop) out.backdrop = backdrop;
+  const slides = backdropsOf(body.images, backdrop);
+  if (slides.length > 1) out.images = slides;
   const poster = img(POSTER, body.poster_path);
   if (poster) out.poster = poster;
   const logo = pickLogo(body.images, lang);

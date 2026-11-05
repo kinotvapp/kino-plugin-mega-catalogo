@@ -54,9 +54,11 @@ export function shell({ route, body, every }) {
       { type: "IconButton", key: "barSettings", icon: "settings", ...tw("tabSettings", "labelText"), ...tw("tabSettings", "tooltip"), onPressed: { event: "tab", arg: "settings" } },
     ];
   }
-  // A title page's banner goes edge to edge: lifted out of the padded column, right under the bar.
-  const banner = body && body.key === "titleBody" && Array.isArray(body.children) && body.children[0] && body.children[0].type === "heroCard" ? body.children[0] : null;
-  const rest = banner ? { ...body, children: body.children.slice(1) } : body;
+  // The main picture (a title page's banner, Inicio's slider) goes edge to edge: lifted out of the padded column, right under the bar.
+  const isBanner = (n) => !!n && (n.type === "heroCard" || n.key === "heroSkeleton" || (n.type === "PageView" && String(n.key).startsWith("hero")));
+  const lifts = !!body && (body.key === "titleBody" || body.key === "home") && Array.isArray(body.children);
+  const banner = lifts ? body.children.find(isBanner) || null : null;
+  const rest = banner ? { ...body, children: body.children.filter((n) => n !== banner) } : body;
   const page = {
     type: "SingleChildScrollView",
     key: "page-" + route,
