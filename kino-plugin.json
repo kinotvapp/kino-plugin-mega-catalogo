@@ -1,0 +1,350 @@
+{
+  "id": "mega-catalogo",
+  "name": "Mega Catálogo",
+  "version": "0.1.0",
+  "apiVersion": 23,
+  "entry": "plugin.js",
+  "icon": "icon.png",
+  "description": "Qué hay en Netflix, Disney+, Prime Video y más según tu país: elige tus plataformas y mira lo nuevo y lo más visto. No reproduce nada.",
+  "categories": [
+    "movies",
+    "series"
+  ],
+  "author": "kinotvapp",
+  "hosts": [
+    "image.tmdb.org"
+  ],
+  "catalogOnly": true,
+  "capabilities": [
+    "home",
+    "browse",
+    "search",
+    "episodes",
+    "meta",
+    "screen",
+    "catalog",
+    "schedule",
+    "notifications",
+    "shared",
+    "library"
+  ],
+  "screen": {
+    "label": "Mega Catálogo",
+    "labelEn": "Mega Catalog",
+    "icon": "movie",
+    "menuOpens": "screen",
+    "opensFrom": [
+      "menu",
+      "settings"
+    ],
+    "settingsIn": "both"
+  },
+  "jobs": [
+    {
+      "id": "refresh",
+      "label": {
+        "es": "Actualizar el catálogo",
+        "en": "Refresh the catalog"
+      },
+      "everyMin": 180,
+      "everyOptions": [
+        60,
+        180,
+        720,
+        1440
+      ]
+    },
+    {
+      "id": "episodes",
+      "label": {
+        "es": "Avisar de capítulos nuevos",
+        "en": "Tell me about new episodes"
+      },
+      "everyMin": 360,
+      "everyOptions": [
+        60,
+        180,
+        360,
+        720,
+        1440
+      ],
+      "runOn": "preferPhone"
+    }
+  ],
+  "settings": [
+    {
+      "key": "p_netflix",
+      "label": "Netflix",
+      "labelEn": "Netflix",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_prime",
+      "label": "Prime Video",
+      "labelEn": "Prime Video",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_disney",
+      "label": "Disney+",
+      "labelEn": "Disney+",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_max",
+      "label": "Max",
+      "labelEn": "Max",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_apple",
+      "label": "Apple TV+",
+      "labelEn": "Apple TV+",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_paramount",
+      "label": "Paramount+",
+      "labelEn": "Paramount+",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_crunchyroll",
+      "label": "Crunchyroll",
+      "labelEn": "Crunchyroll",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "p_hulu",
+      "label": "Hulu",
+      "labelEn": "Hulu",
+      "type": "toggle",
+      "default": false
+    },
+    {
+      "key": "region",
+      "label": "País",
+      "labelEn": "Country",
+      "type": "select",
+      "default": "auto",
+      "hint": "Lo que hay en cada plataforma cambia por país",
+      "hintEn": "What each platform has changes by country",
+      "options": [
+        {
+          "value": "auto",
+          "label": "Automático (según el aparato)",
+          "labelEn": "Automatic (from this device)"
+        },
+        {
+          "value": "CO",
+          "label": "Colombia",
+          "labelEn": "Colombia"
+        },
+        {
+          "value": "MX",
+          "label": "México",
+          "labelEn": "Mexico"
+        },
+        {
+          "value": "AR",
+          "label": "Argentina",
+          "labelEn": "Argentina"
+        },
+        {
+          "value": "CL",
+          "label": "Chile",
+          "labelEn": "Chile"
+        },
+        {
+          "value": "PE",
+          "label": "Perú",
+          "labelEn": "Peru"
+        },
+        {
+          "value": "EC",
+          "label": "Ecuador",
+          "labelEn": "Ecuador"
+        },
+        {
+          "value": "VE",
+          "label": "Venezuela",
+          "labelEn": "Venezuela"
+        },
+        {
+          "value": "UY",
+          "label": "Uruguay",
+          "labelEn": "Uruguay"
+        },
+        {
+          "value": "PY",
+          "label": "Paraguay",
+          "labelEn": "Paraguay"
+        },
+        {
+          "value": "BO",
+          "label": "Bolivia",
+          "labelEn": "Bolivia"
+        },
+        {
+          "value": "CR",
+          "label": "Costa Rica",
+          "labelEn": "Costa Rica"
+        },
+        {
+          "value": "PA",
+          "label": "Panamá",
+          "labelEn": "Panama"
+        },
+        {
+          "value": "DO",
+          "label": "República Dominicana",
+          "labelEn": "Dominican Republic"
+        },
+        {
+          "value": "GT",
+          "label": "Guatemala",
+          "labelEn": "Guatemala"
+        },
+        {
+          "value": "ES",
+          "label": "España",
+          "labelEn": "Spain"
+        },
+        {
+          "value": "US",
+          "label": "Estados Unidos",
+          "labelEn": "United States"
+        },
+        {
+          "value": "BR",
+          "label": "Brasil",
+          "labelEn": "Brazil"
+        },
+        {
+          "value": "GB",
+          "label": "Reino Unido",
+          "labelEn": "United Kingdom"
+        },
+        {
+          "value": "CA",
+          "label": "Canadá",
+          "labelEn": "Canada"
+        }
+      ]
+    },
+    {
+      "key": "kinds",
+      "label": "Qué mostrar",
+      "labelEn": "What to show",
+      "type": "select",
+      "default": "both",
+      "options": [
+        {
+          "value": "both",
+          "label": "Películas y series",
+          "labelEn": "Movies and series"
+        },
+        {
+          "value": "movie",
+          "label": "Solo películas",
+          "labelEn": "Movies only"
+        },
+        {
+          "value": "series",
+          "label": "Solo series",
+          "labelEn": "Series only"
+        }
+      ]
+    },
+    {
+      "key": "newDays",
+      "label": "Qué cuenta como nuevo",
+      "labelEn": "What counts as new",
+      "type": "select",
+      "default": "90",
+      "options": [
+        {
+          "value": "30",
+          "label": "Últimos 30 días",
+          "labelEn": "Last 30 days"
+        },
+        {
+          "value": "90",
+          "label": "Últimos 90 días",
+          "labelEn": "Last 90 days"
+        },
+        {
+          "value": "180",
+          "label": "Últimos 180 días",
+          "labelEn": "Last 180 days"
+        }
+      ]
+    },
+    {
+      "key": "homeRows",
+      "label": "Filas en el Inicio de Kino",
+      "labelEn": "Rows on Kino's Home",
+      "type": "toggle",
+      "default": true
+    },
+    {
+      "key": "resetIntro",
+      "label": "Volver a ver la introducción",
+      "labelEn": "See the introduction again",
+      "type": "action"
+    },
+    {
+      "key": "reloadCatalog",
+      "label": "Vaciar y recargar el catálogo",
+      "labelEn": "Clear and reload the catalog",
+      "type": "action",
+      "confirm": "¿Vaciar el catálogo guardado y volver a cargarlo?",
+      "confirmEn": "Clear the saved catalog and load it again?"
+    }
+  ],
+  "provides": {
+    "availability": {
+      "summary": "Where a movie or series can be watched, from TMDB's watch providers",
+      "calls": {
+        "where": {
+          "in": {
+            "kind": "string",
+            "tmdbId": "number",
+            "region": "string?"
+          },
+          "out": {
+            "platforms": "Platform[]",
+            "region": "string"
+          }
+        },
+        "search": {
+          "in": {
+            "q": "string"
+          },
+          "out": "Title[]"
+        }
+      },
+      "types": {
+        "Platform": {
+          "key": "string",
+          "name": "string"
+        },
+        "Title": {
+          "tmdbId": "number",
+          "kind": "string",
+          "title": "string",
+          "year": "number?",
+          "posterUrl": "string?",
+          "platforms": "Platform[]"
+        }
+      }
+    }
+  }
+}
