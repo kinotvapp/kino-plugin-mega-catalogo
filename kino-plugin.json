@@ -1,10 +1,11 @@
 {
   "id": "mega-catalogo",
   "name": "Mega Catálogo",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "apiVersion": 23,
   "entry": "plugin.js",
   "icon": "icon.png",
+  "theme": { "accent": "#8E7DFF", "onAccent": "#120C2E", "background": "#1E1640", "surface": "#2B2160", "highlight": "#D4CEFF" },
   "description": "Qué hay en Netflix, Disney+, Prime Video y más según tu país: elige tus plataformas y mira lo nuevo y lo más visto. No reproduce nada.",
   "categories": [
     "movies",
