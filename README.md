@@ -1,5 +1,10 @@
 # Mega Catálogo (Mega Catalog)
 
+<p align="center"><img src="icon.png" alt="Mega Catálogo" width="96" height="96"></p>
+
+**Mega Catálogo** para Kino: qué hay en Netflix, Disney+, Prime Video y más en tu país. Solo catálogo, no reproduce nada.
+*Mega Catalog for Kino: what is on Netflix, Disney+, Prime Video and more in your country. Catalog only, it plays nothing.*
+
 A catalog-only Kino plugin: it shows what is available on the streaming platforms the person picks (Netflix, Prime Video,
 Disney+, Max, Apple TV+, Paramount+, Crunchyroll, Hulu) in the person's country, what is new, and lets them search and follow
 series. Data comes from TMDB through `kino.tmdb` (Kino brings the key).
