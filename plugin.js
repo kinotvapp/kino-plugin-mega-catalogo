@@ -1396,10 +1396,12 @@ function shell({ route, body: body2, every }) {
       { type: "IconButton", key: "barSettings", icon: "settings", ...tw("tabSettings", "labelText"), ...tw("tabSettings", "tooltip"), onPressed: { event: "tab", arg: "settings" } }
     ];
   }
+  const banner = body2 && body2.key === "titleBody" && Array.isArray(body2.children) && body2.children[0] && body2.children[0].type === "heroCard" ? body2.children[0] : null;
+  const rest = banner ? { ...body2, children: body2.children.slice(1) } : body2;
   const page = {
     type: "SingleChildScrollView",
     key: "page-" + route,
-    children: [{ type: "Column", key: "body-" + route, padding: PAGE_PADDING, gap: 16, children: [body2] }]
+    children: [...banner ? [banner] : [], { type: "Column", key: "body-" + route, padding: PAGE_PADDING, gap: 16, children: [rest] }]
   };
   const root = { type: "Scaffold", key: "app", appBar, body: page };
   return every ? { ...root, every } : root;
